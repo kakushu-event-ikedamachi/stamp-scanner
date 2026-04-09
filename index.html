@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>池田町スキャナー</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #000; color: white; margin: 0; }
+    #reader { width: 100vw; height: 100vh; }
+    .msg { position: fixed; top: 20px; width: 100%; z-index: 10; font-weight: bold; text-shadow: 0 0 5px #000; }
+  </style>
+</head>
+<body>
+  <div class="msg">QRコードをスキャンしてください</div>
+  <div id="reader"></div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('return');
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" }, 
+      { fps: 10, qrbox: 250 },
+      (decodedText) => {
+        const nextUrl = new URL(returnUrl);
+        nextUrl.searchParams.set('spot', decodedText);
+        window.location.href = nextUrl.toString();
+      }
+    ).catch(err => {
+      alert("カメラを起動できませんでした。ブラウザの設定でカメラを許可してください。");
+    });
+  </script>
+</body>
+</html>
