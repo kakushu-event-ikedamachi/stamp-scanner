@@ -6,42 +6,39 @@
   <title>池田町スタンプスキャナー</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; background: black; color: white; margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; }
+    body { font-family: sans-serif; text-align: center; background: black; color: white; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
     
-    /* カメラの映像を画面全体に広げる */
-    #reader { width: 100%; height: 100%; object-fit: cover !important; z-index: 1; }
-    video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
+    /* カメラ映像を全画面に強制 */
+    #reader { width: 100vw !important; height: 100vh !important; }
+    video { object-fit: cover !important; width: 100vw !important; height: 100vh !important; }
     
-    /* 重ねる案内（UI） */
+    /* ライブラリ標準の白い角やボタンを完全に隠す */
+    #reader__dashboard, #reader__status_span, #reader__camera_selection, video + div { 
+      display: none !important; 
+    }
+
     .overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; flex-direction: column; justify-content: space-between;
       pointer-events: none; z-index: 10;
     }
     
-    /* 【修正ポイント1】タイトル（ヘッダー）を少し小さく、読みやすく */
-    .header { background: rgba(0, 0, 0, 0.6); padding: 12px; font-weight: bold; font-size: 16px; letter-spacing: 1px; }
-    .header .town-name { color: #A7F3D0; font-size: 14px; display: block; margin-bottom: 2px; }
+    .header { background: rgba(0, 0, 0, 0.7); padding: 15px; font-weight: bold; }
+    .header .town-name { color: #A7F3D0; font-size: 14px; display: block; }
 
-    /* 【修正ポイント2】QR読み取り枠をカメラ映像の中央に配置 */
+    /* 紫の枠を画面中央に配置 */
     .scan-guide {
-      width: 260px; height: 260px; border: 3px solid #7B68EE; /* 枠を少し太く */
-      margin: auto; border-radius: 20px; position: relative;
-      /* 枠以外を暗くする処理は、CSSで行うとカメラが外れるので、透過画像や疑似要素を使うのが確実だが、シンプルに枠だけ見せる */
-      box-shadow: 0 0 15px rgba(123, 104, 238, 0.5); /* 枠を光らせる */
+      width: 260px; height: 260px; border: 3px solid #7B68EE;
+      margin: auto; border-radius: 24px; position: relative;
+      box-shadow: 0 0 20px rgba(123, 104, 238, 0.4);
     }
     
-    .footer { background: rgba(0, 0, 0, 0.7); padding: 25px 15px; font-size: 15px; line-height: 1.6; }
-    .footer b { color: #A7F3D0; font-size: 17px; display: block; margin-bottom: 5px; }
-
-    /* html5-qrcodeの内部UIを非表示 */
-    #reader__dashboard, #reader__status_span, #reader__camera_selection, #reader__filescan_input { display: none !important; }
+    .footer { background: rgba(0, 0, 0, 0.7); padding: 30px 15px; }
+    .footer b { color: #A7F3D0; font-size: 18px; display: block; margin-bottom: 5px; }
   </style>
 </head>
 <body>
-
   <div id="reader"></div>
-
   <div class="overlay">
     <div class="header">
       <span class="town-name">長野県 池田町</span>
@@ -55,26 +52,17 @@
   </div>
 
   <script>
-    // あなたの最新のGASウェブアプリURL
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyvqZDbQhrDefT_LcFep7pIeutByo3EHwomDcPIAQgOvyDw-mFbI9jOg3MgvvnuE7tgrQ/exec";
-
     const html5QrCode = new Html5Qrcode("reader");
-    const config = { 
-      fps: 15, // 少しFPSを上げる
-      qrbox: { width: 260, height: 260 },
-      aspectRatio: 1.0 
-    };
 
     html5QrCode.start(
       { facingMode: "environment" }, 
-      config, 
+      { fps: 15, qrbox: { width: 260, height: 260 } }, 
       (decodedText) => {
-        // 読み取り成功時、GASへ飛ばす
         window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
       }
     ).catch(err => {
       console.error(err);
-      document.querySelector('.footer').innerHTML = "<b style='color:red;'>カメラを起動できません</b><br>ブラウザの設定で許可してください";
     });
   </script>
 </body>
