@@ -3,24 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>池田町スタンプラリー入り口</title>
+  <title>QRスキャナー</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; background: #F8F9F1; margin: 0; padding: 20px; }
-    .btn-start { background: #2D5A27; color: white; border: none; padding: 20px 40px; border-radius: 30px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: 50px; }
+    body { font-family: sans-serif; text-align: center; background: #333; color: white; margin: 0; padding: 0; }
+    #reader { width: 100%; max-width: 500px; margin: 0 auto; }
   </style>
 </head>
 <body>
-  <h2>池田町スタンプラリー</h2>
-  <p>下のボタンを押して、スタンプカードを表示します。</p>
-  
-  <button onclick="startApp()" class="btn-start">📷 スタンプカードを開く</button>
-
+  <div id="reader"></div>
   <script>
-    function startApp() {
-      // あなたの最新のGASウェブアプリURLへジャンプします
-      const GAS_URL = "https://script.google.com/macros/s/AKfycbya6Q6HsYVdqw9b2mReeyizY3GME6GYhs7vnNJUIeHtMnimSr-LPqqmtCm_6XfrOgfrEQ/exec";
-      window.location.href = GAS_URL;
-    }
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbya6Q6HsYVdqw9b2mReeyizY3GME6GYhs7vnNJUIeHtMnimSr-LPqqmtCm_6XfrOgfrEQ/exec";
+
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
+      // 読み取ったら即座にGASへ飛ばす
+      window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
+    }).catch(err => {
+      console.error(err);
+      alert("カメラを起動できません。設定を確認してください。");
+    });
   </script>
 </body>
 </html>
