@@ -3,25 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QRスキャナー</title>
+  <title>池田町スタンプスキャナー</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; background: #333; color: white; margin: 0; padding: 0; }
-    #reader { width: 100%; max-width: 500px; margin: 0 auto; }
+    body { font-family: sans-serif; text-align: center; background: #222; color: white; margin: 0; padding: 0; overflow: hidden; }
+    
+    /* カメラのコンテナ */
+    #reader { width: 100vw; height: 100vh; background: black; }
+    
+    /* 重ねる案内（UI） */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; justify-content: space-between;
+      pointer-events: none; z-index: 10;
+    }
+    
+    .header { background: rgba(45, 90, 39, 0.8); padding: 15px; font-weight: bold; font-size: 18px; }
+    
+    /* QR読み取り枠のガイド線 */
+    .scan-guide {
+      width: 250px; height: 250px; border: 2px solid #7B68EE;
+      margin: auto; border-radius: 20px; position: relative;
+      box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); /* 枠以外を暗くする */
+    }
+    
+    .footer { background: rgba(0, 0, 0, 0.7); padding: 25px; font-size: 16px; line-height: 1.5; }
+    .footer b { color: #A7F3D0; font-size: 18px; }
+
+    /* html5-qrcodeの内部テキストを非表示にする（自前のUIで見せるため） */
+    #reader__dashboard, #reader__status_span { display: none !important; }
+    video { object-fit: cover !important; }
   </style>
 </head>
 <body>
+
   <div id="reader"></div>
+
+  <div class="overlay">
+    <div class="header">池田町スタンプラリー</div>
+    <div class="scan-guide"></div>
+    <div class="footer">
+      <b>QRをスキャンしてください</b><br>
+      枠の中にQRコードを合わせてください
+    </div>
+  </div>
+
   <script>
+    // あなたの最新のGASウェブアプリURL
     const GAS_URL = "https://script.google.com/macros/s/AKfycbya6Q6HsYVdqw9b2mReeyizY3GME6GYhs7vnNJUIeHtMnimSr-LPqqmtCm_6XfrOgfrEQ/exec";
 
     const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
-      // 読み取ったら即座にGASへ飛ばす
-      window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
-    }).catch(err => {
+    const config = { 
+      fps: 10, 
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0 
+    };
+
+    html5QrCode.start(
+      { facingMode: "environment" }, 
+      config, 
+      (decodedText) => {
+        // 読み取り成功時
+        window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
+      }
+    ).catch(err => {
       console.error(err);
-      alert("カメラを起動できません。設定を確認してください。");
+      // エラー表示を日本語に
+      document.querySelector('.footer').innerHTML = "<b style='color:red;'>カメラを起動できません</b><br>ブラウザの設定で許可してください";
     });
   </script>
 </body>
