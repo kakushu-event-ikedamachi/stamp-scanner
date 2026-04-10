@@ -35,15 +35,14 @@
             if (returnUrl) {
                 // スキャナーを停止してからGASへ移動
                 html5QrCode.stop().then(() => {
-                    // 読み取った値(decodedText)を spot パラメータとして付与してGASに戻る
+                    // 読み取った値を spot パラメータとして付けてGASに戻る
                     const finalUrl = returnUrl + "?spot=" + encodeURIComponent(decodedText);
                     window.location.href = finalUrl;
                 }).catch(() => {
-                    // 停止エラーが起きても強制移動
                     window.location.href = returnUrl + "?spot=" + encodeURIComponent(decodedText);
                 });
             } else {
-                alert("エラー：戻り先URLが不明です。スタンプカード画面からやり直してください。");
+                alert("戻り先URLが不明です。GASから開き直してください。");
             }
         }
 
