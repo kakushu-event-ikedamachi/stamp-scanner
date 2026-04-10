@@ -7,9 +7,9 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background-color: #2D5A27; color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        #reader { width: 100%; max-width: 500px; background: black; }
+        #reader { width: 100%; max-width: 500px; background: black; border-radius: 12px; overflow: hidden; }
         .info { padding: 20px; text-align: center; }
-        .btn-cancel { margin-top: 20px; padding: 12px 25px; background: white; color: #2D5A27; text-decoration: none; border-radius: 25px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-cancel { margin-top: 20px; padding: 12px 25px; background: white; color: #2D5A27; text-decoration: none; border-radius: 25px; font-weight: bold; border: none; cursor: pointer; display: inline-block; }
     </style>
 </head>
 <body>
@@ -29,25 +29,27 @@
         function onScanSuccess(decodedText) {
             html5QrCode.stop().then(() => {
                 if (returnUrl) {
-                    // 読み取った値を spot パラメータとして付けて戻る
                     const joinChar = returnUrl.includes('?') ? '&' : '?';
                     window.location.href = returnUrl + joinChar + "spot=" + encodeURIComponent(decodedText);
                 } else {
-                    alert("スキャン成功: " + decodedText + "\n戻り先URLが見つかりません。");
+                    alert("スキャン成功: " + decodedText);
                 }
+            }).catch(err => {
+                console.error("停止エラー", err);
             });
         }
 
         const html5QrCode = new Html5Qrcode("reader");
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
+        // カメラ起動
         html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
         .catch(err => {
             console.error(err);
-            alert("カメラの起動に失敗しました。ブラウザの設定でカメラ権限を確認してください。");
+            alert("カメラの起動に失敗しました。ブラウザの設定でカメラ権限を「許可」にしてください。");
         });
 
-        // 戻るボタンの挙動を直接指定
+        // 戻るボタン
         document.getElementById('cancelBtn').onclick = function() {
             if (returnUrl) {
                 window.location.href = returnUrl;
