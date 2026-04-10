@@ -1,62 +1,117 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>池田町 QRスキャナー</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #2D5A27; color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        #reader { width: 100%; max-width: 500px; background: black; border-radius: 12px; overflow: hidden; }
-        .info { padding: 20px; text-align: center; }
-        .btn-cancel { margin-top: 20px; padding: 12px 25px; background: white; color: #2D5A27; text-decoration: none; border-radius: 25px; font-weight: bold; border: none; cursor: pointer; display: inline-block; }
-    </style>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #F8F9F1; margin: 0; padding: 20px; color: #333; }
+    h2 { color: #2D5A27; font-size: 24px; margin-bottom: 30px; }
+    .card-list { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto; }
+    .spot-item { background: white; border-radius: 15px; padding: 20px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: left; position: relative; }
+    
+    /* スタンプの台紙（円） */
+    .stamp-circle { width: 60px; height: 60px; border: 2px dashed #ccc; border-radius: 50%; margin-right: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ccc; flex-shrink: 0; position: relative; z-index: 1; }
+    
+    /* ★花の名前（lavender.png）を表示するスタンプ要素 */
+    .stamp-image { 
+      position: absolute; top: -5px; left: -5px; width: 70px; height: 70px; 
+      background-size: contain; background-repeat: no-repeat; background-position: center; 
+      opacity: 0; transform: scale(3); z-index: 10; pointer-events: none;
+    }
+    
+    /* ポンッ！と押されるアニメーション */
+    @keyframes stampAnim {
+      0% { opacity: 0; transform: scale(4) rotate(-20deg); } /* 最初は大きく斜めに浮いている */
+      70% { opacity: 1; transform: scale(1) rotate(0deg); }  /* 勢いよく着地 */
+      85% { transform: scale(1.2); }                       /* 少し跳ね返る */
+      100% { opacity: 1; transform: scale(1); }              /* 固定 */
+    }
+    
+    /* スタンプ済み状態（アニメあり） */
+    .stamped { border: 2px solid #7B68EE; background: #F3F0FF; }
+    .stamped .stamp-image { 
+      animation: stampAnim 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+    }
+    
+    /* 読み込み済み状態（アニメなし） */
+    .already-stamped { border: 2px solid #7B68EE; background: #F3F0FF; }
+    .already-stamped .stamp-image { opacity: 1; transform: scale(1); animation: none; }
+
+    .spot-info b { font-size: 18px; display: block; }
+    .btn-scan { background: #2D5A27; color: white; border: none; width: 80%; max-width: 300px; padding: 15px; border-radius: 30px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+  </style>
 </head>
 <body>
-    <div class="info">
-        <h2>QRコードを読み取ってください</h2>
-        <p>スタンプポイントのQRを画面枠内に入れてください</p>
+
+  <h2>池田町スタンプカード</h2>
+
+  <div class="card-list">
+    <div id="item-池田町役場623131" class="spot-item">
+      <div class="stamp-circle">1<div class="stamp-image"></div></div>
+      <div class="spot-info"><b>池田町役場</b><small>スタンプ設置場所</small></div>
     </div>
+    <div id="item-展望美術館" class="spot-item">
+      <div class="stamp-circle">2<div class="stamp-image"></div></div>
+      <div class="spot-info"><b>展望美術館</b><small>スタンプ設置場所</small></div>
+    </div>
+    <div id="item-道の駅池田" class="spot-item">
+      <div class="stamp-circle">3<div class="stamp-image"></div></div>
+      <div class="spot-info"><b>道の駅 池田</b><small>スタンプ設置場所</small></div>
+    </div>
+  </div>
 
-    <div id="reader"></div>
+  <button onclick="openScanner()" class="btn-scan">📷 QRスキャンを起動</button>
+  <div id="msg" style="margin-top:15px; font-size:14px; color:#2D5A27; font-weight:bold; min-height:1.2em;"></div>
 
-    <button id="cancelBtn" class="btn-cancel">スタンプカードに戻る</button>
+  <script>
+    const GITHUB_URL = "https://kakushu-event-ikedamachi.github.io/stamp-scanner/";
+    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbyvqZDbQhrDefT_LcFep7pIeutByo3EHomDcPIAQgOvyDw-mFbI9jOg3MgvvnuE7tgrQ/exec";
+    
+    // 【重要】花の名前（lavender.png）に変更しました
+    const STAMP_IMAGE_URL = "https://kakushu-event-ikedamachi.github.io/stamp-scanner/lavender.png";
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const returnUrl = urlParams.get('return');
+    window.onload = function() {
+      let userId = localStorage.getItem('stampUserId');
+      if (!userId) {
+        userId = "IKD-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+        localStorage.setItem('stampUserId', userId);
+      }
+      
+      // 画像をセット
+      document.querySelectorAll('.stamp-image').forEach(el => {
+        el.style.backgroundImage = "url('" + STAMP_IMAGE_URL + "')";
+      });
 
-        function onScanSuccess(decodedText) {
-            html5QrCode.stop().then(() => {
-                if (returnUrl) {
-                    const joinChar = returnUrl.includes('?') ? '&' : '?';
-                    window.location.href = returnUrl + joinChar + "spot=" + encodeURIComponent(decodedText);
-                } else {
-                    alert("スキャン成功: " + decodedText);
-                }
-            }).catch(err => {
-                console.error("停止エラー", err);
-            });
+      // 1. スプレッドシートから取得済みスタンプを読み込んで表示（アニメなし）
+      google.script.run.withSuccessHandler(function(stamps) {
+        if (stamps) {
+          stamps.forEach(id => {
+            const el = document.getElementById('item-' + id);
+            if (el) el.classList.add('already-stamped');
+          });
         }
+      }).getMyStamps(userId);
 
-        const html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      // 2. GitHubから戻ってきた時の「spot」記録処理（アニメあり）
+      const spotId = "<?= scannedSpot ?>"; 
+      if (spotId && spotId !== "null" && spotId !== "") {
+        document.getElementById('msg').innerText = "スタンプ記録中...";
+        google.script.run.withSuccessHandler(function(res) {
+          if(res.success) {
+            const el = document.getElementById('item-' + res.spotId);
+            if (el) el.classList.add('stamped'); // ここでアニメ発動！
+          }
+          alert(res.message);
+          window.history.replaceState({}, null, MY_GAS_URL);
+          document.getElementById('msg').innerText = "";
+        }).recordStamp(userId, spotId, 0, 0);
+      }
+    };
 
-        // カメラ起動
-        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-        .catch(err => {
-            console.error(err);
-            alert("カメラの起動に失敗しました。ブラウザの設定でカメラ権限を「許可」にしてください。");
-        });
-
-        // 戻るボタン
-        document.getElementById('cancelBtn').onclick = function() {
-            if (returnUrl) {
-                window.location.href = returnUrl;
-            } else {
-                window.history.back();
-            }
-        };
-    </script>
+    function openScanner() {
+      window.top.location.href = GITHUB_URL + "?return=" + encodeURIComponent(MY_GAS_URL);
+    }
+  </script>
 </body>
 </html>
