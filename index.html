@@ -6,35 +6,16 @@
   <title>池田町スキャナー</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { 
-      font-family: sans-serif; 
-      text-align: center; 
-      background: black; 
-      color: white; 
-      margin: 0; 
-      padding: 0; 
-      overflow: hidden; 
-      height: 100vh; 
-    }
-    
-    /* カメラ映像を画面いっぱいに表示 */
+    body { font-family: sans-serif; text-align: center; background: black; color: white; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
     #reader { width: 100vw !important; height: 100vh !important; }
     video { object-fit: cover !important; width: 100vw !important; height: 100vh !important; }
     
-    /* UIのレイアウト設定 */
-    .overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; flex-direction: column; justify-content: space-between;
-      pointer-events: none; z-index: 10;
-    }
-    
+    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; z-index: 10; }
     .header { background: rgba(0, 0, 0, 0.7); padding: 20px; font-weight: bold; font-size: 18px; }
     .header .town-name { color: #A7F3D0; font-size: 14px; display: block; margin-bottom: 2px; }
-
     .footer { background: rgba(0, 0, 0, 0.7); padding: 40px 20px; font-size: 16px; line-height: 1.6; }
     .footer b { color: #A7F3D0; font-size: 18px; display: block; margin-bottom: 8px; }
 
-    /* ライブラリ標準のボタンやテキストを非表示にする */
     #reader__dashboard, #reader__status_span, #reader__camera_selection { display: none !important; }
   </style>
 </head>
@@ -50,27 +31,48 @@
     <div></div>
     <div class="footer">
       <b>QRをスキャンしてください</b>
-      枠の中にQRコードを合わせてください
+      枠の中にQRコードを大きく写してください
     </div>
   </div>
 
   <script>
-    /* 【修正済み】ラベンダーが表示される正しいGASのURL */
     const GAS_URL = "https://script.google.com/macros/s/AKfycbya6Q6HsYVdqw9b2mReeyizY3GME6GYhs7vnNJUIeHtMnimSr-LPqqmtCm_6XfrOgfrEQ/exec";
 
     const html5QrCode = new Html5Qrcode("reader");
-    
+
+    // 画面サイズに応じてスキャン枠を動的に計算（画面幅の70%）
+    const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+        let minEdgePercentage = 0.7; 
+        let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+        let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+        return {
+            width: qrboxSize,
+            height: qrboxSize
+        };
+    }
+
     const config = { 
-      fps: 15, 
-      qrbox: 250 // 白いガイド枠のサイズ
+      fps: 20,           // 処理速度をアップ
+      qrbox: qrboxFunction, // 枠を動的に調整
+      aspectRatio: 1.0,  // 正方形に固定して歪みを抑える
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true // ブラウザ標準の高速検知が使えれば使用
+      }
+    };
+
+    // カメラの設定（背面カメラ + オートフォーカス重視）
+    const cameraConfig = { 
+      facingMode: "environment"
     };
 
     html5QrCode.start(
-      { facingMode: "environment" }, 
+      cameraConfig, 
       config, 
       (decodedText) => {
-        // スキャン成功時、正しいGASのURLへ飛ばす
-        window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
+        // スキャン成功時
+        html5QrCode.stop().then(() => {
+            window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
+        });
       }
     ).catch(err => {
       console.error("Camera Error:", err);
