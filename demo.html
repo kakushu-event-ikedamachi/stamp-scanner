@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>池田町スキャナー(デモ用)</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: white; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+    #reader { width: 100vw !important; height: 100vh !important; }
+    video { object-fit: cover !important; width: 100vw !important; height: 100vh !important; }
+    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; z-index: 10; }
+    .header { background: rgba(185, 28, 28, 0.85); padding: 20px; font-weight: bold; font-size: 18px; } /* デモ用とわかるように赤色に */
+    .header .tag { font-size: 12px; background: white; color: #b91c1c; padding: 2px 8px; border-radius: 4px; margin-right: 5px; vertical-align: middle; }
+    .footer { background: rgba(0, 0, 0, 0.7); padding: 40px 20px; padding-bottom: calc(40px + env(safe-area-inset-bottom)); font-size: 16px; line-height: 1.6; }
+    #reader__dashboard, #reader__status_span { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="reader"></div>
+
+  <div class="overlay">
+    <div class="header"><span class="tag">DEMO</span>スタンプラリー スキャナー</div>
+    <div></div>
+    <div class="footer"><b>QRをスキャンしてください</b><br>デモ環境のGASへ戻ります</div>
+  </div>
+
+  <script>
+    // このデモ環境用のGAS URL
+    const DEMO_GAS_URL = "https://script.google.com/macros/s/AKfycbyZeo8gYkmGJpvd_0PbALOewoCLcJ1Yknd_z6qeMFpjW_HgrGx5dd5yuYv6yU7eWMpd/exec";
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    const config = { 
+      fps: 20, 
+      qrbox: (w, h) => {
+        let size = Math.floor(Math.min(w, h) * 0.6);
+        return { width: size, height: size };
+      },
+      aspectRatio: 1.0
+    };
+
+    html5QrCode.start(
+      { facingMode: "environment" }, 
+      config, 
+      (decodedText) => {
+        html5QrCode.stop().then(() => {
+          // デモ用GASにスキャン結果を送信
+          window.location.href = DEMO_GAS_URL + "?spot=" + encodeURIComponent(decodedText);
+        });
+      }
+    ).catch(err => {
+      document.querySelector('.footer').innerHTML = "<b style='color:red;'>カメラ起動エラー</b>";
+    });
+  </script>
+</body>
+</html>
