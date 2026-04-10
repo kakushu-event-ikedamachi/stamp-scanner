@@ -3,49 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>池田町スタンプスキャナー</title>
+  <title>池田町スキャナー</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; text-align: center; background: black; color: white; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
-    
-    /* カメラ映像を全画面に強制 */
     #reader { width: 100vw !important; height: 100vh !important; }
     video { object-fit: cover !important; width: 100vw !important; height: 100vh !important; }
     
-    /* ライブラリ標準の白い角やボタンを完全に隠す */
-    #reader__dashboard, #reader__status_span, #reader__camera_selection, video + div { 
-      display: none !important; 
-    }
-
     .overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; flex-direction: column; justify-content: space-between;
       pointer-events: none; z-index: 10;
     }
-    
     .header { background: rgba(0, 0, 0, 0.7); padding: 15px; font-weight: bold; }
-    .header .town-name { color: #A7F3D0; font-size: 14px; display: block; }
-
-    /* 紫の枠を画面中央に配置 */
-    .scan-guide {
-      width: 260px; height: 260px; border: 3px solid #7B68EE;
-      margin: auto; border-radius: 24px; position: relative;
-      box-shadow: 0 0 20px rgba(123, 104, 238, 0.4);
-    }
-    
     .footer { background: rgba(0, 0, 0, 0.7); padding: 30px 15px; }
     .footer b { color: #A7F3D0; font-size: 18px; display: block; margin-bottom: 5px; }
+
+    /* 標準の白い枠を中央に大きく表示させる調整 */
+    #reader__dashboard { display: none !important; }
   </style>
 </head>
 <body>
   <div id="reader"></div>
   <div class="overlay">
-    <div class="header">
-      <span class="town-name">長野県 池田町</span>
-      スタンプラリー
-    </div>
-    <div class="scan-guide"></div>
-    <div class="footer">
+    <div class="header">長野県 池田町 スタンプラリー</div>
+    <div></div> <div class="footer">
       <b>QRをスキャンしてください</b>
       枠の中にQRコードを合わせてください
     </div>
@@ -55,15 +37,14 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyvqZDbQhrDefT_LcFep7pIeutByo3EHwomDcPIAQgOvyDw-mFbI9jOg3MgvvnuE7tgrQ/exec";
     const html5QrCode = new Html5Qrcode("reader");
 
+    // ライブラリの標準枠（白い角）を表示するように設定
     html5QrCode.start(
       { facingMode: "environment" }, 
-      { fps: 15, qrbox: { width: 260, height: 260 } }, 
+      { fps: 15, qrbox: 250 }, 
       (decodedText) => {
         window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
       }
-    ).catch(err => {
-      console.error(err);
-    });
+    ).catch(err => console.error(err));
   </script>
 </body>
 </html>
