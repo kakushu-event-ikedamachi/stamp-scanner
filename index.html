@@ -19,29 +19,31 @@
     .footer { background: rgba(0, 0, 0, 0.7); padding: 30px 15px; }
     .footer b { color: #A7F3D0; font-size: 18px; display: block; margin-bottom: 5px; }
 
-    /* 標準の白い枠を中央に大きく表示させる調整 */
-    #reader__dashboard { display: none !important; }
+    /* 標準の白い枠以外の余計なUIを隠す */
+    #reader__dashboard, #reader__status_span { display: none !important; }
   </style>
 </head>
 <body>
   <div id="reader"></div>
   <div class="overlay">
     <div class="header">長野県 池田町 スタンプラリー</div>
-    <div></div> <div class="footer">
+    <div class="footer">
       <b>QRをスキャンしてください</b>
       枠の中にQRコードを合わせてください
     </div>
   </div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyvqZDbQhrDefT_LcFep7pIeutByo3EHwomDcPIAQgOvyDw-mFbI9jOg3MgvvnuE7tgrQ/exec";
+    /* 【重要】最新のGAS URLに差し替えました */
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbya6Q6HsYVdqw9b2mReeyizY3GME6GYhs7vnNJUIeHtMnimSr-LPqqmtCm_6XfrOgfrEQ/exec";
+    
     const html5QrCode = new Html5Qrcode("reader");
 
-    // ライブラリの標準枠（白い角）を表示するように設定
     html5QrCode.start(
       { facingMode: "environment" }, 
       { fps: 15, qrbox: 250 }, 
       (decodedText) => {
+        // スキャン成功時に最新のGASへ結果を送信
         window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
       }
     ).catch(err => console.error(err));
