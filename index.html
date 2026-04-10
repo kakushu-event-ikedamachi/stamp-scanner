@@ -1,34 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>池田町スキャナー</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    body { font-family: sans-serif; text-align: center; background: #000; color: white; margin: 0; }
-    #reader { width: 100vw; height: 100vh; }
-    .msg { position: fixed; top: 20px; width: 100%; z-index: 10; font-weight: bold; text-shadow: 0 0 5px #000; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>池田町スタンプスキャナー</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #2D5A27; color: white; margin: 0; padding: 20px; }
+        #reader { width: 100%; max-width: 500px; margin: 20px auto; border-radius: 12px; overflow: hidden; background: white; }
+        .info { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .btn-cancel { background: #666; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 20px; }
+    </style>
 </head>
 <body>
-  <div class="msg">QRコードをスキャンしてください</div>
-  <div id="reader"></div>
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const returnUrl = urlParams.get('return');
-    const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
-      { facingMode: "environment" }, 
-      { fps: 10, qrbox: 250 },
-      (decodedText) => {
-        const nextUrl = new URL(returnUrl);
-        nextUrl.searchParams.set('spot', decodedText);
-        window.location.href = nextUrl.toString();
-      }
-    ).catch(err => {
-      alert("カメラを起動できませんでした。ブラウザの設定でカメラを許可してください。");
-    });
-  </script>
+
+    <h2>QRスキャナー</h2>
+    <div class="info">
+        <p>スタンプラリー専用のQRコードを<br>枠内に収めてください</p>
+    </div>
+
+    <div id="reader"></div>
+
+    <a href="javascript:history.back()" class="btn-cancel">スタンプカードに戻る</a>
+
+    <script>
+        // 1. GASから渡された「戻り先URL」を解析する
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('return');
+
+        function onScanSuccess(decodedText) {
+            // QRコードを読み取った時の処理
+            console.log("読み取り成功:", decodedText);
+
+            if (returnUrl) {
+                // スキャナーを停止してからGASへ移動
+                html5QrCode.stop().then(() => {
+                    // 読み取った値(decodedText)を spot パラメータとして付与してGASに戻る
+                    const finalUrl = returnUrl + "?spot=" + encodeURIComponent(decodedText);
+                    window.location.href = finalUrl;
+                }).catch(() => {
+                    // 停止エラーが起きても強制移動
+                    window.location.href = returnUrl + "?spot=" + encodeURIComponent(decodedText);
+                });
+            } else {
+                alert("エラー：戻り先URLが不明です。スタンプカード画面からやり直してください。");
+            }
+        }
+
+        function onScanFailure(error) {
+            // スキャン失敗（読み取り中）はログに出さない（動作が重くなるため）
+        }
+
+        // 2. カメラの起動
+        const html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess, 
+            onScanFailure
+        ).catch(err => {
+            alert("カメラの起動に失敗しました。ブラウザの設定でカメラを許可してください。");
+            console.error(err);
+        });
+    </script>
 </body>
 </html>
