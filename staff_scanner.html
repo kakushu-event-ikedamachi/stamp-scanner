@@ -2,23 +2,69 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>池田町スタッフスキャン</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #333; color: white; margin: 0; padding: 20px; }
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; }
+        body { 
+            font-family: sans-serif; 
+            text-align: center; 
+            background: #222; 
+            color: white; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; /* 余計なスクロールを防ぐ */
+        }
+        h3 { 
+            background: rgba(0,0,0,0.5); 
+            margin: 0; 
+            padding: 15px; 
+            position: absolute; 
+            top: 0; 
+            width: 100%; 
+            z-index: 10;
+            font-size: 16px;
+        }
+        /* スキャン画面を画面いっぱいに広げる */
+        #reader { 
+            width: 100vw; 
+            height: 100vh; 
+            border: none;
+        }
+        /* ライブラリ内のビデオ要素を画面いっぱいに調整 */
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover; /* 隙間なく表示 */
+        }
     </style>
 </head>
 <body>
     <h3>引換用QRをスキャンしてください</h3>
     <div id="reader"></div>
+
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbya6Q6HsYVdqw9b2mReeyizY3GME6GYhs7vnNJUIeHtMnimSr-LPqqmtCm_6XfrOgfrEQ/exec";
         const q = new Html5Qrcode("reader");
-        q.start({facingMode: "environment"}, {fps: 10, qrbox: 250}, decodedText => {
-            q.stop();
-            // 読み取ったIDを付けてGASのスタッフ画面に飛ばす
-            location.href = GAS_URL + "?p=staff&targetId=" + encodeURIComponent(decodedText);
+
+        // qrbox（スキャン枠）のサイズを画面幅の70%程度に大きく設定
+        const config = { 
+            fps: 10, 
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                const fontSize = Math.floor(minEdge * 0.7);
+                return { width: fontSize, height: fontSize };
+            },
+            aspectRatio: 1.0 // 正方形に近いプレビュー
+        };
+
+        q.start({facingMode: "environment"}, config, decodedText => {
+            q.stop().then(() => {
+                const targetUrl = GAS_URL + "?p=staff&targetId=" + encodeURIComponent(decodedText);
+                window.top.location.href = targetUrl;
+            }).catch(() => {
+                window.top.location.href = GAS_URL + "?p=staff&targetId=" + encodeURIComponent(decodedText);
+            });
         });
     </script>
 </body>
