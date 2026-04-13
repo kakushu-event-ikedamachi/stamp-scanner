@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>池田町スタッフスキャン</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #333; color: white; margin: 0; padding: 20px; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <h3>引換用QRをスキャンしてください</h3>
+    <div id="reader"></div>
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbya6Q6HsYVdqw9b2mReeyizY3GME6GYhs7vnNJUIeHtMnimSr-LPqqmtCm_6XfrOgfrEQ/exec";
+        const q = new Html5Qrcode("reader");
+        q.start({facingMode: "environment"}, {fps: 10, qrbox: 250}, decodedText => {
+            q.stop();
+            // 読み取ったIDを付けてGASのスタッフ画面に飛ばす
+            location.href = GAS_URL + "?p=staff&targetId=" + encodeURIComponent(decodedText);
+        });
+    </script>
+</body>
+</html>
