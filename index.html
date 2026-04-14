@@ -45,9 +45,8 @@
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    // 【修正済み】画面サイズに応じてスキャン枠を動的に計算（画面幅の55%）
+    // 画面サイズに応じてスキャン枠を動的に計算（画面幅の55%）
     const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
-        // 枠のサイズを「70%」から「55%」へ縮小
         let minEdgePercentage = 0.55; 
         let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
         let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
@@ -58,14 +57,20 @@
     }
 
     const config = { 
-      fps: 20,           
-      qrbox: qrboxFunction, // 枠を縮小
+      fps: 30,             // ★20から30へ引き上げ（iOSの滑らかさを向上）
+      qrbox: qrboxFunction, 
       aspectRatio: 1.0,  
+      videoConstraints: {
+        facingMode: "environment",
+        width: { ideal: 1280 }, // ★高解像度を要求
+        height: { ideal: 720 }
+      },
       experimentalFeatures: {
         useBarCodeDetectorIfSupported: true 
       }
     };
 
+    // start時の設定
     const cameraConfig = { 
       facingMode: "environment"
     };
@@ -76,6 +81,9 @@
       (decodedText) => {
         // スキャン成功時
         html5QrCode.stop().then(() => {
+            window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
+        }).catch(err => {
+            // Stopに失敗しても遷移は実行
             window.location.href = GAS_URL + "?spot=" + encodeURIComponent(decodedText);
         });
       }
